@@ -8,56 +8,39 @@ from PIL import Image
 
 config = []
 
+def writeConfig(outputfile, templatefile, formats):
+	of = open(outputfile, 'wt', encoding='utf-8')
+	with open(templatefile) as tf:
+		line = tf.readline()
+		while line:
+			of.write(line.format(**formats))
+			line = tf.readline()
+	
+	of.close
+
 def writeOverlay(gamename, overlaycfgfilepath, imagename):
 	overlaycfgfilename = gamename + ".cfg"
 	overlaycfgfilefullpath = overlaycfgfilepath  + overlaycfgfilename
-	
-	overlaycfgf = open(overlaycfgfilefullpath, 'wt', encoding='utf-8')
-	overlaycfgf.write('overlays = 1\n')
-	overlaycfgf.write('overlay0_overlay = %s\n' % imagename)
-	overlaycfgf.write('overlay0_full_screen = true\n')
-	overlaycfgf.write('overlay0_descs = 0')	
-	overlaycfgf.close
-	
-	####################overlaytemplatef = open("templates\\layouts\\template.cfg", 'r', encoding='utf-8')
-	with open("templates\\layouts\\template.cfg") as overlaytemplatef:
-		line = overlaytemplatef.readline()
-		while line:
-			print("TEST: ", line.format(imagename=imagename))
-			line = overlaytemplatef.readline()
-	
+	formats = {'imagename': imagename}
+	writeConfig(overlaycfgfilename, "templates\\layouts\\template.cfg", formats)
 	print("Overlay configuration file %s written" % overlaycfgfilefullpath)
 
 def writeCore(gamename, corecfgfilepath, realoverlaybasedir, xsize, ysize, firstxtransparent, firstytransparent):
 	corecfgfilename = gamename + ".cfg"
 	corecfgfilefullpath = corecfgfilepath  + corecfgfilename
-	
-	corecfgf = open(corecfgfilefullpath, 'wt', encoding='utf-8')
-	corecfgf.write('aspect_ratio_index = "23"\n')
-	corecfgf.write('custom_viewport_height = "%d"\n' % ysize)
-	corecfgf.write('custom_viewport_width = "%d"\n' % xsize)
-	corecfgf.write('custom_viewport_x = "%d"\n' % firstxtransparent)
-	corecfgf.write('custom_viewport_y = "%d"\n' % firstytransparent)
-	corecfgf.write('input_overlay = \"%s%s\"\n' % (realoverlaybasedir, corecfgfilename))
-	corecfgf.write('input_overlay_enable = "true"\n')
-	corecfgf.write('input_overlay_hide_in_menu = "false"\n')
-	corecfgf.write('video_shader_enable = "true"\n')
-	corecfgf.write('video_fullscreen = "true"\n')
-	corecfgf.close
-	
+	formats = {'ysize': ysize, 'xsize': xsize, 'firstxtransparent': firstxtransparent, 
+		'firstytransparent': firstytransparent, 'realoverlaybasedir': realoverlaybasedir,
+		'corecfgfilename': corecfgfilename}
+	writeConfig(corecfgfilefullpath, "templates\\config\\template.cfg", formats)
 	print("Core configuration file %s written" % corecfgfilefullpath)
-
+	
 def writeShader(gamename, shadercfgfilepath):
 	shadercfgfilename = gamename + ".cgp"
 	shadercfgfilefullpath = shadercfgfilepath  + shadercfgfilename
-	
-	shadercfgf = open(shadercfgfilefullpath, 'wt', encoding='utf-8')
-	shadercfgf.write('#reference "..\..\shaders_cg\crt\crt-geom.cgp')
-	shadercfgf.close
-	
+	formats = {}
+	writeConfig(shadercfgfilefullpath, "templates\\shaders\\template.cgp", formats)
 	print("Shader configuration file %s written" % shadercfgfilefullpath)
-
-
+	
 def upscale():
 	gamex = 320
 	gamey = 224
