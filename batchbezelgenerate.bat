@@ -1,0 +1,1 @@
+for %%i in (input\bezels\*) do python overlaymanager.py gencfg %1 %%~ni
