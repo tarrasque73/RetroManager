@@ -1,0 +1,16 @@
+[overlaymanager]
+#This is the REAL full path where the generated bezel overlays will be stored.
+#It's the path that will be written in the per core configuration files.
+#It MUST be set to the actual path where the bezel *.png and *.cfg files will be stored.
+#Example: realoverlaybasedir = C:\Emulation Stuff\Retroarch\layouts\
+realoverlaybasedir = C:\Emulation Stuff\Retroarch\layouts\
+
+#These are the paths where the configuration files and bezel overlays will be created / copied.
+#In order to use them they need to be moved where Retroarch expects to find them.
+#These settings don't usually need to be edited.
+#The program automatically creates the path structure.
+#WARNING: every already existing file WILL be overwritten!
+inputbasedir = input\bezels\
+outputoverlaybasedir = output\layouts\
+outputcorebasedir = output\config\
+outputshaderbasedir = output\shaders\presets\

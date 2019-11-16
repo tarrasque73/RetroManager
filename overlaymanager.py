@@ -1,12 +1,7 @@
-import sys
-import getopt
 import os
 import pathlib
-import configparser
 from shutil import copy
 from PIL import Image
-
-config = []
 
 def writeConfig(outputfile, templatefile, formats):
 	of = open(outputfile, 'wt', encoding='utf-8')
@@ -22,7 +17,7 @@ def writeOverlay(gamename, overlaycfgfilepath, imagename):
 	overlaycfgfilename = gamename + ".cfg"
 	overlaycfgfilefullpath = overlaycfgfilepath  + overlaycfgfilename
 	formats = {'imagename': imagename}
-	writeConfig(overlaycfgfilename, "templates\\layouts\\template.cfg", formats)
+	writeConfig(overlaycfgfilefullpath, "templates\\layouts\\template.cfg", formats)
 	print("Overlay configuration file %s written" % overlaycfgfilefullpath)
 
 def writeCore(gamename, corecfgfilepath, realoverlaybasedir, xsize, ysize, firstxtransparent, firstytransparent):
@@ -68,7 +63,7 @@ def upscale():
 	cips = 4 / float(3)
 	print("4/3 = %.10f" % cips)
 	
-def getViewportRange(axis, im):
+def getViewportAxisRange(axis, im):
 	transparency = 200
 	margin = 3
 
@@ -107,7 +102,13 @@ def getViewportRange(axis, im):
 	
 	return viewportsize, firsttransparent
 	
-def gencfg(core, gamename):
+def getViewportRange(im):
+	xsize, firstxtransparent = getViewportAxisRange("x", im)
+	ysize, firstytransparent = getViewportAxisRange("y", im)
+	
+	return firstxtransparent, firstytransparent, xsize, ysize 
+
+def gencfg(core, gamename, config):
 	imagename = gamename + ".png"
 	imagefilename = config['overlaymanager']['inputbasedir'] + imagename
 	transparency = 200
@@ -119,8 +120,7 @@ def gencfg(core, gamename):
 	print("Image data: ", im.format, im.size, im.mode, im.getbands())
 	print("")
 	
-	xsize, firstxtransparent = getViewportRange("x", im)
-	ysize, firstytransparent = getViewportRange("y", im)
+	firstxtransparent, firstytransparent, xsize, ysize = getViewportRange(im)
 	
 	#print("Test new viewport size: ", newxsize, newysize)
 	
@@ -150,71 +150,5 @@ def gencfg(core, gamename):
 	writeCore(gamename, coredir, realoverlaybasedir, xsize, ysize, firstxtransparent, firstytransparent)
 	writeShader(gamename, shaderdir)
 
-def readConfig():
-	if (not os.path.exists('config.ini')):
-		print('ERROR: Missing configuration file: config.ini')
-		return -1
-
-	global config
-	config = configparser.ConfigParser()
-	config.read('config.ini')
-	print("config: ", config['overlaymanager'])
-
-	if ('overlaymanager' not in config):
-		print('ERROR: Missing configuration section: [overlaymanager]')
-		return -1
-	if ('realoverlaybasedir' not in config['overlaymanager']):
-		print('ERROR: Missing configuration key: [overlaymanager] realoverlaybasedir')
-		return -1
-
-def usage():
-	print("Usage: python %s <command> <arguments>" % sys.argv[0])
-	print("<command>: accepted values are currently only: help and gencfg")
-	print("<arguments>: Argument list depending on <command>")
-	print("")
-	print("Command listing and supported arguments:")
-	print("")
-	print("help: Prints this help info.")
-	print("Syntax: python %s help" % sys.argv[0])
-	print("")
-	print("gencfg: Scans input folder for image overlays, detects the transparent viewport")
-	print("        and generates the corrsponding config files.")
-	print("Syntax: python %s gencfg <core> <gamename>" % sys.argv[0])
-	print("<core>: The Retroarch core you want the config files generated for.")
-	print("        Used to create the output path where to create the output files.")
-	print("        Remember to use quotes around the core name if it contains spaces.")
-	print("<gamename>: The MAME core name of the game.")
-	print("        Input folders will be scanned for *.png overlay images matching the gamename")
-	print("        and output files will be named according to it.")
-	print("Example: python %s gencfg \"MAME 2003-Plus\" pacman" % sys.argv[0])
 	
-def main():
-	argv = sys.argv[1:]			
-	#try:
-	#	opts, args = getopt.getopt(argv,"-h")
-	#except getopt.GetoptError:
-	#	print("Usage: %s <command> <core> <arguments>" % sys.argv[0])
-	#	sys.exit(2)
 
-	#print("Arguments: [" + ", ".join(argv) + "]")
-	#print("")
-
-	if (len(sys.argv) == 1):
-		usage()
-	elif ('help' == sys.argv[1]):
-		usage()
-	elif ('checkconfig' == sys.argv[1]):
-		readConfig()
-	elif 'gencfg' == sys.argv[1]:
-		readConfig()
-		core = sys.argv[2]
-		gamename = sys.argv[3]
-		gencfg(core, gamename)
-	else:
-		print('Function not supported')
-		return -1
-		
-if __name__ == '__main__':
-	#print("Start program\n")
-	main()
-	#print("\nEnd program")
