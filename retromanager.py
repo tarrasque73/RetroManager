@@ -50,7 +50,7 @@ def usage():
 	print("Example: python %s gen_shader \"MAME 2016\" pacman" % sys.argv[0])
 	print("")
 	print("gen_all: performs commands gen_cfg, gen_overlay and gen_shader with the supplied arguments.")
-	print("Syntax: python %s gen_shader <core> <gamename>" % sys.argv[0])
+	print("Syntax: python %s gen_all <core> <gamename>" % sys.argv[0])
 	
 def readConfig():
 	if (not os.path.exists('config.ini')):
@@ -71,14 +71,6 @@ def readConfig():
 	
 def main():
 	argv = sys.argv[1:]			
-	#try:
-	#	opts, args = getopt.getopt(argv,"-h")
-	#except getopt.GetoptError:
-	#	print("Usage: %s <command> <core> <arguments>" % sys.argv[0])
-	#	sys.exit(2)
-
-	#print("Arguments: [" + ", ".join(argv) + "]")
-	#print("")
 
 	if (len(sys.argv) == 1):
 		usage()
@@ -108,6 +100,13 @@ def main():
 		overlaymanager.genCfg(core, gamename, config)
 		overlaymanager.genOverlay(core, gamename, config)
 		overlaymanager.genShader(core, gamename, config)
+	elif: 'resize' == sys.argv[1]:
+		readConfig()
+		core = sys.argv[2]
+		gamename = sys.argv[3]
+		resizex= sys.argv[4]
+		resizey= sys.argv[5]
+		overlaymanager.resize(core, gamename, resizex, resizey, config)
 	else:
 		print('Function not supported')
 		return -1

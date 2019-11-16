@@ -20,12 +20,11 @@ def writeOverlay(gamename, overlaycfgfilepath, imagename):
 	writeConfig(overlaycfgfilefullpath, "templates\\layouts\\template.cfg", formats)
 	print("Overlay configuration file %s written" % overlaycfgfilefullpath)
 
-def writeCore(gamename, corecfgfilepath, realoverlaybasedir, xsize, ysize, firstxtransparent, firstytransparent):
+def writeCore(gamename, corecfgfilepath, realoverlaybasedir, viewport_width, viewport_height, viewport_x, viewport_y):
 	corecfgfilename = gamename + ".cfg"
 	corecfgfilefullpath = corecfgfilepath  + corecfgfilename
-	formats = {'ysize': ysize, 'xsize': xsize, 'firstxtransparent': firstxtransparent, 
-		'firstytransparent': firstytransparent, 'realoverlaybasedir': realoverlaybasedir,
-		'corecfgfilename': corecfgfilename}
+	formats = {'viewport_height': viewport_height, 'viewport_width': viewport_width, 'viewport_x': viewport_x, 
+		'viewport_y': viewport_y, 'realoverlaybasedir': realoverlaybasedir, 'corecfgfilename': corecfgfilename}
 	writeConfig(corecfgfilefullpath, "templates\\config\\template.cfg", formats)
 	print("Core configuration file %s written" % corecfgfilefullpath)
 	
@@ -120,16 +119,16 @@ def genCfg(core, gamename, config):
 	print("Image data: ", im.format, im.size, im.mode, im.getbands())
 	print("")
 	
-	firstxtransparent, firstytransparent, xsize, ysize = getViewportRange(im)
+	viewport_x, viewport_y, viewport_width, viewport_height = getViewportRange(im)
 	
 	#print("Test new viewport size: ", newxsize, newysize)
 	
-	if (xsize == 0 or ysize == 0) :
+	if (viewport_width == 0 or viewport_height == 0) :
 		print("No transparent viewport found.")
 		return -1
 	
-	viewportr = ysize / float(xsize)		
-	print("Viewport size: [%d * %d], ratio %.10f" % (xsize, ysize, viewportr))
+	viewport_r = viewport_height / float(viewport_width)		
+	print("Viewport size: [%d * %d], ratio %.10f" % (viewport_width, viewport_height, viewport_r))
 	print("")		
 
 	coredir = config['overlaymanager']['outputcorebasedir'] + core + "\\"
@@ -137,7 +136,7 @@ def genCfg(core, gamename, config):
 	
 	os.makedirs(coredir, exist_ok=True)	
 	
-	writeCore(gamename, coredir, realoverlaybasedir, xsize, ysize, firstxtransparent, firstytransparent)
+	writeCore(gamename, coredir, realoverlaybasedir, viewport_width, viewport_height, viewport_x, viewport_y)
 
 def genShader(core, gamename, config):
 	shaderdir = config['overlaymanager']['outputshaderbasedir'] + core + "\\"
