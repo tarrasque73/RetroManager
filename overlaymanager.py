@@ -108,7 +108,7 @@ def getViewportRange(im):
 	
 	return firstxtransparent, firstytransparent, xsize, ysize 
 
-def gencfg(core, gamename, config):
+def genCfg(core, gamename, config):
 	imagename = gamename + ".png"
 	imagefilename = config['overlaymanager']['inputbasedir'] + imagename
 	transparency = 200
@@ -132,23 +132,23 @@ def gencfg(core, gamename, config):
 	print("Viewport size: [%d * %d], ratio %.10f" % (xsize, ysize, viewportr))
 	print("")		
 
-	inputdir = config['overlaymanager']['inputbasedir']
-	overlaydir = config['overlaymanager']['outputoverlaybasedir']
 	coredir = config['overlaymanager']['outputcorebasedir'] + core + "\\"
-	shaderdir = config['overlaymanager']['outputshaderbasedir'] + core + "\\"
-	
-	os.makedirs(overlaydir, exist_ok=True)
-	os.makedirs(coredir, exist_ok=True)
-	os.makedirs(shaderdir, exist_ok=True)
-	
-	overlayfilename = imagename
-	copy(inputdir + imagename, overlaydir + overlayfilename)
-	
 	realoverlaybasedir = config['overlaymanager']['realoverlaybasedir']
 	
-	writeOverlay(gamename, overlaydir, imagename)
-	writeCore(gamename, coredir, realoverlaybasedir, xsize, ysize, firstxtransparent, firstytransparent)
-	writeShader(gamename, shaderdir)
-
+	os.makedirs(coredir, exist_ok=True)	
 	
+	writeCore(gamename, coredir, realoverlaybasedir, xsize, ysize, firstxtransparent, firstytransparent)
 
+def genShader(core, gamename, config):
+	shaderdir = config['overlaymanager']['outputshaderbasedir'] + core + "\\"
+	os.makedirs(shaderdir, exist_ok=True)
+	writeShader(gamename, shaderdir)
+	
+def genOverlay(core, gamename, config):
+	imagename = gamename + ".png"
+	inputdir = config['overlaymanager']['inputbasedir']
+	overlaydir = config['overlaymanager']['outputoverlaybasedir']
+	os.makedirs(overlaydir, exist_ok=True)
+	copy(inputdir + imagename, overlaydir + imagename)
+	writeOverlay(gamename, overlaydir, imagename)
+	
