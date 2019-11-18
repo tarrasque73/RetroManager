@@ -35,6 +35,33 @@ def writeShader(gamename, shadercfgfilepath):
 	writeConfig(shadercfgfilefullpath, "templates\\shaders\\template.cgp", formats)
 	print("Shader configuration file %s written" % shadercfgfilefullpath)
 	
+def upscale():
+	gamex = 320
+	gamey = 224
+	
+	screenx = 1920
+	screeny = 1080
+	z = 0
+	tx = 0
+	ty = 0
+	
+	while (z < 10):
+		tx = gamex * z
+		ty = gamey * z
+		if ((tx > screenx) or (ty > screeny)):
+			z = z - 1
+			break
+		z = z + 1
+	
+	targetx = gamex * z
+	targety = gamey * z
+	gamer = targetx / float(targety)
+	
+	print("Game size: %d * %d, ratio %.10f" % (gamex, gamey, gamex / float(gamey)))
+	print("Target size: %d * %d, ratio %.10f (Multiplied X%d)" % (targetx, targety, gamer, z))
+	cips = 4 / float(3)
+	print("4/3 = %.10f" % cips)
+
 def getViewportAxisRange(axis, im):
 	transparency = 200
 	margin = 3
@@ -86,9 +113,9 @@ def genCfg(core, gamename, config):
 
 	print("Checking image: ", imagename)
 	print(imagefilename)
+	
 	im = Image.open(imagefilename)
 	print("Image data: ", im.format, im.size, im.mode, im.getbands())
-	print("")
 	
 	viewport_x, viewport_y, viewport_width, viewport_height = getViewportRange(im)
 	
@@ -114,7 +141,7 @@ def genShader(core, gamename, config):
 	os.makedirs(shaderdir, exist_ok=True)
 	writeShader(gamename, shaderdir)
 	
-def genOverlay(core, gamename, config):
+def genOverlay(core, gamename, maxwidth, maxheight, config):
 	imagename = gamename + ".png"
 	inputdir = config['overlaymanager']['inputbasedir']
 	overlaydir = config['overlaymanager']['outputoverlaybasedir']
