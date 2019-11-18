@@ -1,7 +1,7 @@
 import os
 import pathlib
 from shutil import copy
-from PIL import Image
+from PIL import Image, ImageDraw
 
 def writeConfig(outputfile, templatefile, formats):
 	of = open(outputfile, 'wt', encoding='utf-8')
@@ -34,33 +34,6 @@ def writeShader(gamename, shadercfgfilepath):
 	formats = {}
 	writeConfig(shadercfgfilefullpath, "templates\\shaders\\template.cgp", formats)
 	print("Shader configuration file %s written" % shadercfgfilefullpath)
-	
-def upscale():
-	gamex = 320
-	gamey = 224
-	
-	screenx = 1920
-	screeny = 1080
-	z = 0
-	tx = 0
-	ty = 0
-	
-	while (z < 10):
-		tx = gamex * z
-		ty = gamey * z
-		if ((tx > screenx) or (ty > screeny)):
-			z = z - 1
-			break
-		z = z + 1
-	
-	targetx = gamex * z
-	targety = gamey * z
-	gamer = targetx / float(targety)
-	
-	print("Game size: %d * %d, ratio %.10f" % (gamex, gamey, gamex / float(gamey)))
-	print("Target size: %d * %d, ratio %.10f (Multiplied X%d)" % (targetx, targety, gamer, z))
-	cips = 4 / float(3)
-	print("4/3 = %.10f" % cips)
 	
 def getViewportAxisRange(axis, im):
 	transparency = 200
@@ -110,8 +83,6 @@ def getViewportRange(im):
 def genCfg(core, gamename, config):
 	imagename = gamename + ".png"
 	imagefilename = config['overlaymanager']['inputbasedir'] + imagename
-	transparency = 200
-	margin = 3
 
 	print("Checking image: ", imagename)
 	print(imagefilename)
