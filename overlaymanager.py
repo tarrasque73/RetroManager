@@ -13,7 +13,7 @@ def writeConfig(outputfile, templatefile, formats):
 	
 	of.close
 
-def writeOverlay(gamename, overlaycfgfilepath, imagename):
+def writeOverlayCfg(gamename, overlaycfgfilepath, imagename):
 	overlaycfgfilename = gamename + ".cfg"
 	overlaycfgfilefullpath = overlaycfgfilepath  + overlaycfgfilename
 	formats = {'imagename': imagename}
@@ -107,9 +107,96 @@ def getViewportRange(im):
 	
 	return firstxtransparent, firstytransparent, xsize, ysize 
 
+def resize(core, gamename, maxwidth, maxheight, marginx, marginy, mode, bc, config):
+	imagename = gamename + ".png"
+	imagefilename = config['overlay']['inputoverlaybasedir'] + imagename
+	overlaydir = config['general']['outputoverlaybasedir']
+	os.makedirs(overlaydir, exist_ok=True)
+
+	print("Resizing image: ", imagefilename)
+	
+	print('Max width / height', maxwidth, maxheight)
+	
+	im = Image.open(imagefilename)
+	print("Original image data: ", im.format, im.size, im.mode, mode, im.getbands())
+	
+	if (maxwidth == 0) :
+		maxwidth = im.width
+	if (maxheight == 0) :
+		maxheight = im.height
+		
+	if (maxwidth == im.width and maxheight == im.height and mode == 'outer') :
+		print("No resizing needed")
+		copy(imagefilename, overlaydir + imagename)
+	else:		
+		#get size of the viewport of the original overlay
+		viewport_x, viewport_y, viewport_width, viewport_height = getViewportRange(im)
+		print("Original viewport size: x %d y %d w %d h %d" % (viewport_x, viewport_y, viewport_width, viewport_height))	
+
+		#sanity checks
+		if (viewport_width < 1 or viewport_height < 1) :
+			print("ERROR: No transparent viewport found.")
+			return -1	
+		
+		#calculate resized image target size accounting for margins
+		resizewidth = maxwidth - marginx
+		resizeheight = maxheight - marginy
+		
+		#calculate area to base the resize operation depending on mode (inner, outer)
+		if (mode == 'inner') :
+			areax = viewport_width
+			areay = viewport_height
+		else:
+			areax = im.width
+			areay = im.height
+
+		#calculate the actual new ratio, width and height for the resized image
+		ratio = min(resizewidth/areax, resizeheight/areay)
+		new_width = round(im.width  * ratio)
+		new_height = round(im.height  * ratio)
+		
+		#resize the image
+		newim = im.resize((new_width, new_height), Image.ANTIALIAS)
+		print("Resized image data:", im.format, newim.size, newim.mode, newim.getbands())
+		#####newim.save(overlaydir + "resized_" + imagename, "PNG")
+
+		#get size of the viewport of the resized overlay
+		rviewport_x, rviewport_y, rviewport_width, rviewport_height = getViewportRange(newim)
+		print("Resized viewport size: x %d y %d w %d h %d" % (rviewport_x, rviewport_y, rviewport_width, rviewport_height))
+		
+		#calculate offset for pasting the resized image and the mask, depending on resize mode
+		if (mode == 'inner') :
+			offsetx = round((maxwidth - rviewport_width) / 2 - rviewport_x)
+			offsety = round((maxheight - rviewport_height) / 2 -rviewport_y)
+		else:
+			offsetx = round((maxwidth - new_width) / 2)
+			offsety = round((maxheight - new_height) / 2)
+		
+		#create background image
+		backim = Image.new("RGBA", (maxwidth, maxheight), "#" + bc)
+		#####backim.save(overlaydir + "bkg_" + imagename, "PNG")
+
+		#create transparency mask
+		newmask = Image.new('RGBA', (new_width, new_height), (255, 255, 255, 0))
+		
+		#paste mask over background
+		backim.paste(newmask, (offsetx, offsety))
+		#####backim.save(overlaydir + "mask_" + imagename, "PNG")
+		
+		#paste resized image over backgound and mask
+		backim.paste(newim, (offsetx, offsety))
+		#####backim.save(overlaydir + "final_" + imagename, "PNG")
+
+		#save overlay
+		backim.save(overlaydir + imagename, "PNG")
+
+	#write overlay config file
+	writeOverlayCfg(gamename, overlaydir, imagename)
+	
+
 def genCfg(core, gamename, config):
 	imagename = gamename + ".png"
-	imagefilename = config['overlaymanager']['inputbasedir'] + imagename
+	imagefilename = config['config']['inputoverlaybasedir'] + imagename
 
 	print("Checking image: ", imagename)
 	print(imagefilename)
@@ -129,22 +216,22 @@ def genCfg(core, gamename, config):
 	print("Viewport size: [%d * %d], ratio %.10f" % (viewport_width, viewport_height, viewport_r))
 	print("")		
 
-	coredir = config['overlaymanager']['outputcorebasedir'] + core + "\\"
-	realoverlaybasedir = config['overlaymanager']['realoverlaybasedir']
+	coredir = config['general']['outputcorebasedir'] + core + "\\"
+	realoverlaybasedir = config['general']['realoverlaybasedir']
 	
 	os.makedirs(coredir, exist_ok=True)	
 	
 	writeCore(gamename, coredir, realoverlaybasedir, viewport_width, viewport_height, viewport_x, viewport_y)
 
 def genShader(core, gamename, config):
-	shaderdir = config['overlaymanager']['outputshaderbasedir'] + core + "\\"
+	shaderdir = config['general']['outputshaderbasedir'] + core + "\\"
 	os.makedirs(shaderdir, exist_ok=True)
 	writeShader(gamename, shaderdir)
 	
-def genOverlay(core, gamename, maxwidth, maxheight, config):
+def copyOverlay(core, gamename, config):
 	imagename = gamename + ".png"
-	inputdir = config['overlaymanager']['inputbasedir']
-	overlaydir = config['overlaymanager']['outputoverlaybasedir']
+	inputdir = config['general']['inputbasedir']
+	overlaydir = config['general']['outputoverlaybasedir']
 	os.makedirs(overlaydir, exist_ok=True)
 	copy(inputdir + imagename, overlaydir + imagename)
 	writeOverlay(gamename, overlaydir, imagename)
