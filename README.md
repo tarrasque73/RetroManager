@@ -3,13 +3,13 @@
 ## Simple utility to manage RetroArch overlay images and related config files
 
 
-###Installation
+### Installation
 
 Download the zip file and uncompress wherever you want.
 
 The program is written in Python3 so you'll need the Python language 3.* installed on your system. The program is then OS independent and should work fine on Linux, Mac or Windows.
 
-###Configuration
+### Configuration
 
 Rename the default configuration file to "config.ini". The file contains the basic paths for the utility to work.
 
@@ -25,21 +25,21 @@ TODO
 
 Write help on how to edit and customized the default templates.
 
-###Usage
+### Usage
 
-Basic syntax: "python retromanager.py <command> <additional parameters>"
+Basic syntax: `python retromanager.py <command> <additional parameters>`
 
-Launch "python retromanager.py -h" for full help.
+Launch `python retromanager.py -h` for full help.
 
 Where:
 
 Current supported parameters are: overlay_resize, config_generate, shader_generate, generate_all
  
-####overlay_resize
+#### overlay_resize
 
 Resizes an overlay from the input folder to the output folder and generates the corresponding .cfg file according to the template. for our purposes, "overlay" is any PNG image that contains a sqar(ish) transparent or mostly transparent area in the middle, which we refer to as "viewport". All resize operations keep the aspect ratio of the original image.
 
-Basic syntax: "python retromanager.py overlay_resize <core> <gamename> <additional parameters>" 
+Basic syntax: `python retromanager.py overlay_resize <core> <gamename> <additional parameters>` 
 
 The command looks for input file <gamename>.png in the input directory, detects the size of the viewport and scales it depending on the additional parameters if needed, before saving it in the output folder.
 
@@ -57,23 +57,23 @@ NOTE: when -tx, -ty and -rm are all missing or set to default the original overl
 
 Examples: 
 
-python retromanager.py "MAME 2016" pacman
+`python retromanager.py "MAME 2016" pacman`
 
 Simple copy of overlay into output folder and configuration file generation
 
-python retromanager.py "MAME 2016" pacman -rm inner
+`python retromanager.py "MAME 2016" pacman -rm inner`
 
 Resize overlay maximising the viewport area in an overlay with the same size of the original, all excess parts cropped.
 
-python retromanager.py "MAME 2016" pacman -rm inner -mx 100 - my 100
+`python retromanager.py "MAME 2016" pacman -rm inner -mx 100 - my 100`
 
 Resize overlay in an overlay with the same size of the original, leaving 100 pixels of margin around the viewport.
 
-python retromanager.py "MAME 2016" pacman -rm inner -mx 100 - my 100 - tx 1920 - ty 1080 -bc FFFFFF
+`python retromanager.py "MAME 2016" pacman -rm inner -mx 100 - my 100 - tx 1920 - ty 1080 -bc FFFFFF`
 
 As above, but resized overlay will be 1920x1080 pixels. If the aspect ratio of the original overlay and the resized overlay differ, any excess area will be white.
 
-####config_generate
+#### config_generate
 
 Generates the configuration files for RetroArch. These are game dependant and must be copied in the folder where RetroArch expects to find them, which includes the core name in the path
 
@@ -87,7 +87,7 @@ TODO
 
 Continue documentation
 
-####shader_generate
+#### shader_generate
 
 Generates RetroArch shader preset files.
 
@@ -95,9 +95,9 @@ TODO
 
 Continue documentation
 
-####generate_all
+#### generate_all
 
-Runs "overlay_resize", "gonfig_generate" and "shader_generate" in sequence.
+Runs `overlay_resize`, `config_generate` and `shader_generate` in sequence.
 
 TODO
 

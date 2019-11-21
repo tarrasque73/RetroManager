@@ -45,7 +45,13 @@ def setupUsage():
 	
 	parser_shader_generate = subparsers.add_parser('shader_generate', description="Generate shader configuration files", help="Generate shader files", parents=[parent_parser])
 
-	parser_shader_generate = subparsers.add_parser('generate_all', description="Performs config_generate, overlay_generate, shader_generate", help="Generate all files", parents=[parent_parser])
+	parser_generate_all = subparsers.add_parser('generate_all', description="Performs config_generate, overlay_generate, shader_generate", help="Generate all files", parents=[parent_parser])
+	parser_generate_all.add_argument("-tx", "--targetsizex", type=int, default=0, help="target X size of the generated overlay")
+	parser_generate_all.add_argument("-ty", "--targetsizey", type=int, default=0, help="target Y size of the generated overlay")
+	parser_generate_all.add_argument("-mx", "--marginx", type=int, default=0, help="left and right margins of the generated overlay")
+	parser_generate_all.add_argument("-my", "--marginy", type=int, default=0, help="top and bottom margins of the generated overlay")
+	parser_generate_all.add_argument("-rm", "--resizemode", type=str, default='outer', choices=['inner', 'outer'], help="mode of the resizing of the overlay")
+	parser_generate_all.add_argument("-bc", "--backgroundcolor", type=str, default='000000', help="background color")
 
 	args = parser.parse_args()
 	
