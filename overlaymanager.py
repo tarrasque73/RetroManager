@@ -23,7 +23,7 @@ def getTemplate(filename, folder, default, logger):
 		logger.debug("Using default template file: %s" % fulldefaultname)
 		return fulldefaultname
 	else:
-		logger.error("ERROR: Missing configuration file: %s" % fulldefaultname)
+		logger.error("Missing configuration file: %s" % fulldefaultname)
 		exit(-1)	
 
 def writeLayoutCfg(gamename, layoutcfgfilepath, imagename, viewport_width, viewport_height, viewport_x, viewport_y, bezel_width, bezel_height, logger):
@@ -42,6 +42,7 @@ def writeOverlayCfg(gamename, overlaycfgfilepath, imagename, logger):
 	formats = {'imagename': imagename}
 	template = getTemplate(gamename + ".cfg", "templates\\overlays\\", "_default.cfg", logger)
 	#writeConfig(overlaycfgfilefullpath, "templates\\overlays\\template.cfg", formats)
+	writeConfig(overlaycfgfilefullpath, template, formats)
 	logger.info("Overlay configuration file %s written" % overlaycfgfilefullpath)
 
 def writeCore(gamename, corecfgfilepath, realoverlaybasedir, viewport_width, viewport_height, viewport_x, viewport_y, logger):
@@ -51,6 +52,7 @@ def writeCore(gamename, corecfgfilepath, realoverlaybasedir, viewport_width, vie
 		'viewport_y': viewport_y, 'realoverlaybasedir': realoverlaybasedir, 'corecfgfilename': corecfgfilename}
 	template = getTemplate(gamename + ".cfg", "templates\\config\\", "_default.cfg", logger)
 	#writeConfig(corecfgfilefullpath, "templates\\config\\template.cfg", formats)
+	writeConfig(corecfgfilefullpath, template, formats)
 	logger.info("Core configuration file %s written" % corecfgfilefullpath)
 	
 def writeShader(gamename, shadercfgfilepath, logger):
@@ -59,6 +61,7 @@ def writeShader(gamename, shadercfgfilepath, logger):
 	formats = {}
 	template = getTemplate(gamename + ".cgp", "templates\\shaders\\", "_default.cgp", logger)
 	#writeConfig(shadercfgfilefullpath, "templates\\shaders\\template.cgp", formats)
+	writeConfig(shadercfgfilefullpath, template, formats)
 	logger.info("Shader configuration file %s written" % shadercfgfilefullpath)
 	
 def upscale():
@@ -88,10 +91,7 @@ def upscale():
 	cips = 4 / float(3)
 	logger.info("4/3 = %.10f" % cips)
 
-def getViewportAxisRange(axis, im, logger):
-	transparency = 200
-	margin = 3
-
+def getViewportAxisRange(axis, im, tt, padding, logger):
 	if (axis == "x"):
 		stop = im.size[0]
 		fixed = im.size[1] / 2
@@ -109,15 +109,15 @@ def getViewportAxisRange(axis, im, logger):
 		else:
 			pix = im.getpixel((fixed, i))
 			
-		if pix[3] >= transparency and firstcounter < margin:
+		if pix[3] >= tt and firstcounter < padding:
 			firsttransparent = 0
 			lasttransparent = 0
 			firstcounter = 0
-		if pix[3] < transparency and firsttransparent == 0 and firstcounter >= margin:
+		if pix[3] < tt and firsttransparent == 0 and firstcounter >= padding:
 			firsttransparent = i
-		if pix[3] < transparency and firsttransparent != 0:
+		if pix[3] < tt and firsttransparent != 0:
 			lasttransparent = i
-		if pix[3] < transparency:
+		if pix[3] < tt:
 			firstcounter = firstcounter +1
 
 	viewportsize = lasttransparent - firsttransparent
@@ -127,13 +127,13 @@ def getViewportAxisRange(axis, im, logger):
 	
 	return viewportsize, firsttransparent
 	
-def getViewportRange(im, logger):
-	xsize, firstxtransparent = getViewportAxisRange("x", im, logger)
-	ysize, firstytransparent = getViewportAxisRange("y", im, logger)
+def getViewportRange(im, tt, padding, logger):
+	xsize, firstxtransparent = getViewportAxisRange("x", im, tt, padding, logger)
+	ysize, firstytransparent = getViewportAxisRange("y", im, tt, padding, logger)
 	
 	return firstxtransparent, firstytransparent, xsize, ysize 
 
-def resize(core, gamename, maxwidth, maxheight, marginx, marginy, mode, bc, config, logger):
+def resize(core, gamename, maxwidth, maxheight, marginx, marginy, mode, bc, tt, padding, config, logger):
 
 	imagename = gamename + ".png"
 	imagefilename = config['resize']['inputresizebasedir'] + imagename
@@ -156,7 +156,7 @@ def resize(core, gamename, maxwidth, maxheight, marginx, marginy, mode, bc, conf
 		copy(imagefilename, overlaydir + imagename)
 	else:		
 		#get size of the viewport of the original overlay
-		viewport_x, viewport_y, viewport_width, viewport_height = getViewportRange(im, logger)
+		viewport_x, viewport_y, viewport_width, viewport_height = getViewportRange(im, tt, padding, logger)
 		logger.info("Original viewport size: x %d y %d w %d h %d" % (viewport_x, viewport_y, viewport_width, viewport_height))	
 
 		#sanity checks
@@ -187,7 +187,7 @@ def resize(core, gamename, maxwidth, maxheight, marginx, marginy, mode, bc, conf
 		#####newim.save(overlaydir + "resized_" + imagename, "PNG")
 
 		#get size of the viewport of the resized overlay
-		rviewport_x, rviewport_y, rviewport_width, rviewport_height = getViewportRange(newim, logger)
+		rviewport_x, rviewport_y, rviewport_width, rviewport_height = getViewportRange(newim, tt, padding, logger)
 		logger.info("Resized viewport size: x %d y %d w %d h %d" % (rviewport_x, rviewport_y, rviewport_width, rviewport_height))
 		
 		#calculate offset for pasting the resized image and the mask, depending on resize mode
@@ -215,6 +215,7 @@ def resize(core, gamename, maxwidth, maxheight, marginx, marginy, mode, bc, conf
 
 		#save overlay
 		backim.save(overlaydir + imagename, "PNG")
+		logger.info("Resided bezel %s written" % (overlaydir + imagename))
 	
 def generateOverlay(core, gamename, config, logger):
 
@@ -229,7 +230,7 @@ def generateOverlay(core, gamename, config, logger):
 	#write overlay config file
 	writeOverlayCfg(gamename, overlaydir, imagename, logger)
 	
-def generateLayout(core, gamename, config, logger):
+def generateLayout(core, gamename, tt, padding, config, logger):
 
 	imagename = gamename + ".png"
 	imagefilename = config['layout']['inputlayoutbasedir'] + imagename
@@ -239,12 +240,12 @@ def generateLayout(core, gamename, config, logger):
 	im = Image.open(imagefilename)
 	logger.debug("Layout image data: %s %s %s %s" % (im.format, im.size, im.mode, im.getbands()))
 	
-	viewport_x, viewport_y, viewport_width, viewport_height = getViewportRange(im, logger)
+	viewport_x, viewport_y, viewport_width, viewport_height = getViewportRange(im, tt, padding, logger)
 
 	#write layout config file
 	writeLayoutCfg(gamename, layoutdir, imagename, viewport_width, viewport_height, viewport_x, viewport_y, im.width, im.height, logger)
 	
-def generateCfg(core, gamename, config, logger):
+def generateCfg(core, gamename, tt, padding, config, logger):
 	imagename = gamename + ".png"
 	imagefilename = config['config']['inputoverlaybasedir'] + imagename
 	coredir = config['config']['outputcorebasedir'] + core + "\\"
@@ -252,7 +253,7 @@ def generateCfg(core, gamename, config, logger):
 	im = Image.open(imagefilename)
 	logger.debug("Image data: %s %s %s %s" % (im.format, im.size, im.mode, im.getbands()))
 	
-	viewport_x, viewport_y, viewport_width, viewport_height = getViewportRange(im, logger)
+	viewport_x, viewport_y, viewport_width, viewport_height = getViewportRange(im, tt, padding, logger)
 	
 	#print("Test new viewport size: ", newxsize, newysize)
 	
