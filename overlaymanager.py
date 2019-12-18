@@ -13,27 +13,53 @@ def writeConfig(outputfile, templatefile, formats):
 	
 	of.close
 
-def writeOverlayCfg(gamename, overlaycfgfilepath, imagename):
+def getTemplate(filename, folder, default, logger):
+	fullfilename = folder + filename
+	fulldefaultname = folder + default
+	if (os.path.exists(fullfilename)):
+		logger.debug("Using specific template file: %s" % fullfilename)
+		return fullfilename
+	elif (os.path.exists(fulldefaultname)):
+		logger.debug("Using default template file: %s" % fulldefaultname)
+		return fulldefaultname
+	else:
+		logger.error("ERROR: Missing configuration file: %s" % fulldefaultname)
+		exit(-1)	
+
+def writeLayoutCfg(gamename, layoutcfgfilepath, imagename, viewport_width, viewport_height, viewport_x, viewport_y, bezel_width, bezel_height, logger):
+	layoutcfgfilename = gamename + ".lay"
+	layoutcfgfilefullpath = layoutcfgfilepath  + layoutcfgfilename
+	formats = {'imagename': imagename, 'viewport_height': viewport_height, 'viewport_width': viewport_width, 'viewport_x': viewport_x, 
+		'viewport_y': viewport_y, 'bezel_width': bezel_width, 'bezel_height': bezel_height}
+	template = getTemplate(gamename + ".lay", "templates\\layouts\\", "_default.lay", logger)
+	writeConfig(layoutcfgfilefullpath, template, formats)
+	#writeConfig(layoutcfgfilefullpath, "templates\\layouts\\template.lay", formats)
+	logger.info("Layout configuration file %s written" % layoutcfgfilefullpath)
+
+def writeOverlayCfg(gamename, overlaycfgfilepath, imagename, logger):
 	overlaycfgfilename = gamename + ".cfg"
 	overlaycfgfilefullpath = overlaycfgfilepath  + overlaycfgfilename
 	formats = {'imagename': imagename}
-	writeConfig(overlaycfgfilefullpath, "templates\\layouts\\template.cfg", formats)
-	print("Overlay configuration file %s written" % overlaycfgfilefullpath)
+	template = getTemplate(gamename + ".cfg", "templates\\overlays\\", "_default.cfg", logger)
+	#writeConfig(overlaycfgfilefullpath, "templates\\overlays\\template.cfg", formats)
+	logger.info("Overlay configuration file %s written" % overlaycfgfilefullpath)
 
-def writeCore(gamename, corecfgfilepath, realoverlaybasedir, viewport_width, viewport_height, viewport_x, viewport_y):
+def writeCore(gamename, corecfgfilepath, realoverlaybasedir, viewport_width, viewport_height, viewport_x, viewport_y, logger):
 	corecfgfilename = gamename + ".cfg"
 	corecfgfilefullpath = corecfgfilepath  + corecfgfilename
 	formats = {'viewport_height': viewport_height, 'viewport_width': viewport_width, 'viewport_x': viewport_x, 
 		'viewport_y': viewport_y, 'realoverlaybasedir': realoverlaybasedir, 'corecfgfilename': corecfgfilename}
-	writeConfig(corecfgfilefullpath, "templates\\config\\template.cfg", formats)
-	print("Core configuration file %s written" % corecfgfilefullpath)
+	template = getTemplate(gamename + ".cfg", "templates\\config\\", "_default.cfg", logger)
+	#writeConfig(corecfgfilefullpath, "templates\\config\\template.cfg", formats)
+	logger.info("Core configuration file %s written" % corecfgfilefullpath)
 	
-def writeShader(gamename, shadercfgfilepath):
+def writeShader(gamename, shadercfgfilepath, logger):
 	shadercfgfilename = gamename + ".cgp"
 	shadercfgfilefullpath = shadercfgfilepath  + shadercfgfilename
 	formats = {}
-	writeConfig(shadercfgfilefullpath, "templates\\shaders\\template.cgp", formats)
-	print("Shader configuration file %s written" % shadercfgfilefullpath)
+	template = getTemplate(gamename + ".cgp", "templates\\shaders\\", "_default.cgp", logger)
+	#writeConfig(shadercfgfilefullpath, "templates\\shaders\\template.cgp", formats)
+	logger.info("Shader configuration file %s written" % shadercfgfilefullpath)
 	
 def upscale():
 	gamex = 320
@@ -57,12 +83,12 @@ def upscale():
 	targety = gamey * z
 	gamer = targetx / float(targety)
 	
-	print("Game size: %d * %d, ratio %.10f" % (gamex, gamey, gamex / float(gamey)))
-	print("Target size: %d * %d, ratio %.10f (Multiplied X%d)" % (targetx, targety, gamer, z))
+	logger.info("Game size: %d * %d, ratio %.10f" % (gamex, gamey, gamex / float(gamey)))
+	logger.info("Target size: %d * %d, ratio %.10f (Multiplied X%d)" % (targetx, targety, gamer, z))
 	cips = 4 / float(3)
-	print("4/3 = %.10f" % cips)
+	logger.info("4/3 = %.10f" % cips)
 
-def getViewportAxisRange(axis, im):
+def getViewportAxisRange(axis, im, logger):
 	transparency = 200
 	margin = 3
 
@@ -96,29 +122,29 @@ def getViewportAxisRange(axis, im):
 
 	viewportsize = lasttransparent - firsttransparent
 
-	print("First %s transparent pixel: %d" % (axis, firsttransparent))
-	print("Last %s transparent pixel: %d" % (axis, lasttransparent))
+	logger.debug("First %s transparent pixel: %d" % (axis, firsttransparent))
+	logger.debug("Last %s transparent pixel: %d" % (axis, lasttransparent))
 	
 	return viewportsize, firsttransparent
 	
-def getViewportRange(im):
-	xsize, firstxtransparent = getViewportAxisRange("x", im)
-	ysize, firstytransparent = getViewportAxisRange("y", im)
+def getViewportRange(im, logger):
+	xsize, firstxtransparent = getViewportAxisRange("x", im, logger)
+	ysize, firstytransparent = getViewportAxisRange("y", im, logger)
 	
 	return firstxtransparent, firstytransparent, xsize, ysize 
 
-def resize(core, gamename, maxwidth, maxheight, marginx, marginy, mode, bc, config):
+def resize(core, gamename, maxwidth, maxheight, marginx, marginy, mode, bc, config, logger):
+
 	imagename = gamename + ".png"
-	imagefilename = config['overlay']['inputoverlaybasedir'] + imagename
-	overlaydir = config['general']['outputoverlaybasedir']
+	imagefilename = config['resize']['inputresizebasedir'] + imagename
+	overlaydir = config['resize']['outputresizebasedir']
 	os.makedirs(overlaydir, exist_ok=True)
 
-	print("Resizing image: ", imagefilename)
-	
-	print('Max width / height', maxwidth, maxheight)
+	logger.info("Resizing image: %s " % imagefilename)
+	logger.debug('Max width / height: %s %s' % (maxwidth, maxheight))
 	
 	im = Image.open(imagefilename)
-	print("Original image data: ", im.format, im.size, im.mode, mode, im.getbands())
+	logger.debug("Original image data: %s %s %s %s %s" % (im.format, im.size, im.mode, mode, im.getbands()))
 	
 	if (maxwidth == 0) :
 		maxwidth = im.width
@@ -126,16 +152,16 @@ def resize(core, gamename, maxwidth, maxheight, marginx, marginy, mode, bc, conf
 		maxheight = im.height
 		
 	if (maxwidth == im.width and maxheight == im.height and mode == 'outer') :
-		print("No resizing needed")
+		logger.info("No resizing needed")
 		copy(imagefilename, overlaydir + imagename)
 	else:		
 		#get size of the viewport of the original overlay
-		viewport_x, viewport_y, viewport_width, viewport_height = getViewportRange(im)
-		print("Original viewport size: x %d y %d w %d h %d" % (viewport_x, viewport_y, viewport_width, viewport_height))	
+		viewport_x, viewport_y, viewport_width, viewport_height = getViewportRange(im, logger)
+		logger.info("Original viewport size: x %d y %d w %d h %d" % (viewport_x, viewport_y, viewport_width, viewport_height))	
 
 		#sanity checks
 		if (viewport_width < 1 or viewport_height < 1) :
-			print("ERROR: No transparent viewport found.")
+			logger.error("No transparent viewport found.")
 			return -1	
 		
 		#calculate resized image target size accounting for margins
@@ -157,12 +183,12 @@ def resize(core, gamename, maxwidth, maxheight, marginx, marginy, mode, bc, conf
 		
 		#resize the image
 		newim = im.resize((new_width, new_height), Image.ANTIALIAS)
-		print("Resized image data:", im.format, newim.size, newim.mode, newim.getbands())
+		logger.debug("Resized image data: %s %s %s %s" % (im.format, newim.size, newim.mode, newim.getbands()))
 		#####newim.save(overlaydir + "resized_" + imagename, "PNG")
 
 		#get size of the viewport of the resized overlay
-		rviewport_x, rviewport_y, rviewport_width, rviewport_height = getViewportRange(newim)
-		print("Resized viewport size: x %d y %d w %d h %d" % (rviewport_x, rviewport_y, rviewport_width, rviewport_height))
+		rviewport_x, rviewport_y, rviewport_width, rviewport_height = getViewportRange(newim, logger)
+		logger.info("Resized viewport size: x %d y %d w %d h %d" % (rviewport_x, rviewport_y, rviewport_width, rviewport_height))
 		
 		#calculate offset for pasting the resized image and the mask, depending on resize mode
 		if (mode == 'inner') :
@@ -189,44 +215,64 @@ def resize(core, gamename, maxwidth, maxheight, marginx, marginy, mode, bc, conf
 
 		#save overlay
 		backim.save(overlaydir + imagename, "PNG")
+	
+def generateOverlay(core, gamename, config, logger):
+
+	imagename = gamename + ".png"
+	imagefilename = config['overlay']['inputoverlaybasedir'] + imagename
+	overlaydir = config['overlay']['outputoverlaybasedir']
+	os.makedirs(overlaydir, exist_ok=True)
+
+	im = Image.open(imagefilename)
+	logger.debug("Overlay image data: %s %s %s %s" % (im.format, im.size, im.mode, im.getbands()))
 
 	#write overlay config file
-	writeOverlayCfg(gamename, overlaydir, imagename)
+	writeOverlayCfg(gamename, overlaydir, imagename, logger)
 	
+def generateLayout(core, gamename, config, logger):
 
-def genCfg(core, gamename, config):
 	imagename = gamename + ".png"
-	imagefilename = config['config']['inputoverlaybasedir'] + imagename
-
-	print("Checking image: ", imagename)
-	print(imagefilename)
+	imagefilename = config['layout']['inputlayoutbasedir'] + imagename
+	layoutdir = config['layout']['outputlayoutbasedir']
+	os.makedirs(layoutdir, exist_ok=True)
 	
 	im = Image.open(imagefilename)
-	print("Image data: ", im.format, im.size, im.mode, im.getbands())
+	logger.debug("Layout image data: %s %s %s %s" % (im.format, im.size, im.mode, im.getbands()))
 	
-	viewport_x, viewport_y, viewport_width, viewport_height = getViewportRange(im)
+	viewport_x, viewport_y, viewport_width, viewport_height = getViewportRange(im, logger)
+
+	#write layout config file
+	writeLayoutCfg(gamename, layoutdir, imagename, viewport_width, viewport_height, viewport_x, viewport_y, im.width, im.height, logger)
+	
+def generateCfg(core, gamename, config, logger):
+	imagename = gamename + ".png"
+	imagefilename = config['config']['inputoverlaybasedir'] + imagename
+	coredir = config['config']['outputcorebasedir'] + core + "\\"
+
+	im = Image.open(imagefilename)
+	logger.debug("Image data: %s %s %s %s" % (im.format, im.size, im.mode, im.getbands()))
+	
+	viewport_x, viewport_y, viewport_width, viewport_height = getViewportRange(im, logger)
 	
 	#print("Test new viewport size: ", newxsize, newysize)
 	
 	if (viewport_width == 0 or viewport_height == 0) :
-		print("No transparent viewport found.")
+		logger.info("No transparent viewport found.")
 		return -1
 	
 	viewport_r = viewport_height / float(viewport_width)		
-	print("Viewport size: [%d * %d], ratio %.10f" % (viewport_width, viewport_height, viewport_r))
-	print("")		
+	logger.debug("Viewport size: [%d * %d], ratio %.10f" % (viewport_width, viewport_height, viewport_r))
 
-	coredir = config['general']['outputcorebasedir'] + core + "\\"
 	realoverlaybasedir = config['general']['realoverlaybasedir']
 	
 	os.makedirs(coredir, exist_ok=True)	
 	
-	writeCore(gamename, coredir, realoverlaybasedir, viewport_width, viewport_height, viewport_x, viewport_y)
+	writeCore(gamename, coredir, realoverlaybasedir, viewport_width, viewport_height, viewport_x, viewport_y, logger)
 
-def genShader(core, gamename, config):
-	shaderdir = config['general']['outputshaderbasedir'] + core + "\\"
+def generateShader(core, gamename, config, logger):
+	shaderdir = config['shader']['outputshaderbasedir'] + core + "\\"
 	os.makedirs(shaderdir, exist_ok=True)
-	writeShader(gamename, shaderdir)
+	writeShader(gamename, shaderdir, logger)
 	
 def copyOverlay(core, gamename, config):
 	imagename = gamename + ".png"
@@ -234,5 +280,5 @@ def copyOverlay(core, gamename, config):
 	overlaydir = config['general']['outputoverlaybasedir']
 	os.makedirs(overlaydir, exist_ok=True)
 	copy(inputdir + imagename, overlaydir + imagename)
-	writeOverlay(gamename, overlaydir, imagename)
+	writeOverlay(gamename, overlaydir, imagename, logger)
 	

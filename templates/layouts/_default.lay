@@ -1,0 +1,12 @@
+<element name="bezel">
+	<image file="{imagename}" />
+</element>
+
+<view name="artwork">
+	<screen index="0">
+		<bounds x="{viewport_x}" y="{viewport_y}" width="{viewport_width}" height="{viewport_height}" />
+	</screen>
+	<bezel element="bezel">
+		<bounds x="0" y="0" width="{bezel_width}" height="{bezel_height}" />
+	</bezel>
+</view>

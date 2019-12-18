@@ -1,1 +1,1 @@
-for %%i in (input\bezels\*) do python retromanager.py overlay_resize %1 %%~ni -tx 1920 -ty 1080
+for %%i in (..\input\bezels\*) do python retromanager.py -c ../config.ini generate_all %1 %%~ni -rm inner -tx 1920 -ty 1080 -mx 50 -my 50

@@ -5,12 +5,32 @@
 #Example: realoverlaybasedir = C:\Emulation Stuff\Retroarch\layouts\
 realoverlaybasedir = C:\Emulation Stuff\Retroarch\layouts\
 
-#These are the paths where the configuration files and bezel overlays will be created / copied.
-#In order to use them they need to be moved where Retroarch expects to find them.
+#Following are the paths where the configuration files and bezel overlays will be created / copied to.
+#In order to use them they need to be moved where RetroArch expects to find them.
 #These settings don't usually need to be edited.
 #The program automatically creates the path structure.
 #WARNING: every already existing file WILL be overwritten!
-inputbasedir = input\bezels\
-outputoverlaybasedir = output\layouts\
-outputcorebasedir = output\config\
+
+#TIP:
+#If you set the input path for the generate commands (overlay, layout, shader...) equal
+#to the output path of the resize command you can process all bezels and generated
+#the configuration files by just running generate_all 
+
+[resize]
+inputresizebasedir = input\bezels\
+outputresizebasedir = output\overlays\
+
+[shader]
 outputshaderbasedir = output\shaders\presets\
+
+[overlay]
+inputoverlaybasedir = output\overlays\
+outputoverlaybasedir = output\overlays\
+
+[layout]
+inputlayoutbasedir = output\overlays\
+outputlayoutbasedir = output\layouts\
+
+[config]
+inputoverlaybasedir = output\overlays\
+outputcorebasedir = output\config\
