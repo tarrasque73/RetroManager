@@ -156,6 +156,8 @@ def getViewportAxisRange(axis, im, tt, padding, logger):
 			lasttransparent = i-1
 			logger.debug("Got last trasparent on %s axis at : %d" % (axis, lasttransparent))
 
+	lasttransparent = lasttransparent - padding
+	firsttransparent = firsttransparent + padding
 	viewportsize = lasttransparent - firsttransparent
 
 	logger.debug("Viewport scan on %s axis : %d to %d (size %d)" % (axis, firsttransparent, lasttransparent, viewportsize))
@@ -195,11 +197,11 @@ def resize(core, gamename, maxwidth, maxheight, marginx, marginy, customx, custo
 	if (customy == 0) :
 		customy = im.height
 
-	if (customx > maxwidth) :
-		logger.error("Custom X viewport size must be smaller than X target size.")
+	if (mode == 'custom') and (customx > maxwidth) :
+		logger.error("Custom X viewport size %d must be smaller than X target size %d ." % (customx, maxwidth))
 		return -1	
-	if (customy > maxheight) :
-		logger.error("Custom Y viewport size must be smaller than Y target size.")
+	if (mode == 'custom') and (customy > maxheight) :
+		logger.error("Custom Y viewport size %s must be smaller than Y target size %d." % (customy, maxheight))
 		return -1	
 		
 	if (maxwidth == im.width and maxheight == im.height and mode == 'outer') :

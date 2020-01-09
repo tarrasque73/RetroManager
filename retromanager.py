@@ -66,8 +66,8 @@ def setupUsage(logger):
 	parser_layout_generate.add_argument("-pd", "--padding", type=int, default=3, help="padding between viewport and bezel")
 
 	parser_config_generate = subparsers.add_parser('config_generate', description="Generate RetroArch core configuration files", help="Generate RetroArch core configuration files", parents=[parent_parser])
-	parser_config_generate.add_argument("-tt", "--transparency", type=int, default=200, help="transparency threshold for bezel detection")
-	parser_config_generate.add_argument("-pd", "--padding", type=int, default=3, help="padding between viewport and bezel")
+	parser_config_generate.add_argument("-tt", "--transparency", type=int, default=200, help="transparency threshold for bezel detection (default 200)")
+	parser_config_generate.add_argument("-pd", "--padding", type=int, default=3, help="padding between viewport and bezel (default 3 pixels)")
 
 	parser_shader_generate = subparsers.add_parser('shader_generate', description="Generate shader configuration files", help="Generate shader files", parents=[parent_parser])
 
