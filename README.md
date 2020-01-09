@@ -49,13 +49,13 @@ Parameters:
 
 - `-tm` sets the "mode" of the resize operation, and can be "outer", "inner" or "custom". Default is "outer"
 
-	- `outer` mode resizes the bezel based on the dimensions of the dimensions of the original image.
+	- `outer` mode resizes the bezel based on the dimensions of the original image. Useful when you already have your bezels in the correct dimensions and you're only interested in viewport detection for config files generation.
 
-	- `inner` mode resizes the bezel based on the dimensions of the viewport. This is useful when you want to maximise the play area of the game on your monitor. In this case some part of the bezel will be cropped.
+	- `inner` mode resizes the bezel based on the dimensions of the viewport. Useful when you want to maximise the play area of the game on your monitor. In this case some part of the bezel will be cropped.
 
-	- `custom` mode is similar to inner mode but lets you specify the size of the resized viewport explicitly with parameters `-cx` and `-cy` unless of fitting it in the target size (with optional margins). It's particularly useful when you want all the resized viewport to have the same size, whether they are horizontal or vertical, by launching with parameters similar to: `python retromanager.py "MAME 2016" pacman -rm custom -cx 1000 -cy 1000 -tx 1920 -ty 1080`
+	- `custom` mode is similar to inner mode but lets you specify the size of the resized viewport explicitly with parameters `-cx` and `-cy` instead of fitting it in the target size, with optional margins. It's particularly useful when you want all the resized viewport to have the same size, whether they are horizontal or vertical (see examples, below).
 
-- `-cx` and `-cy` set the intended size of theresized viewport for mode `outer`. They are ignored for other resize modes. If not provided they default to the original dimensions. If
+- `-cx` and `-cy` set the intended size of theresized viewport for mode `outer`. They are ignored for other resize modes. If not provided they default to the original dimensions.
 
 - `-mx` and `-my` set the margins of the resize operation. they are usually used combined with `-rm inner` in order to leave some of the bezel visible around the resized viewport. They don't have much use with `-rm outer` unless you want to let some of the background visible. They are ignored with `-rm custom`. Defaults are 0.
 
@@ -84,7 +84,7 @@ As above, but resized bezel will be 1920x1080 pixels. If the aspect ratio of the
 `python retromanager.py "MAME 2016" blktiger -rm custom -cx 1000 -cy 1000 -tx 1920 -ty 1080`
 `python retromanager.py "MAME 2016" gyruss -rm custom -cx 1000 -cy 1000 -tx 1920 -ty 1080`
 
-In this examples, the two bezels have different orientations because the first game has an horizontal screen and the second vertical. The commands produce new bezels where the viewports have the same size. 
+In this examples, the two bezels have different orientations because the first game has an horizontal screen and the second vertical. The commands produce new bezels where the viewports have the same maximum dimension. 
 
 #### config_generate
 
