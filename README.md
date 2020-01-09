@@ -49,9 +49,9 @@ Parameters:
 
 - `-tm` sets the "mode" of the resize operation, and can be "outer", "inner" or "custom". Default is "outer"
 
-	-`outer` mode resizes the bezel based on the dimensions of the dimensions of the original image.
+	- `outer` mode resizes the bezel based on the dimensions of the dimensions of the original image.
 
-	-`inner` mode resizes the bezel based on the dimensions of the viewport. This is useful when you want to maximise the play area of the game on your monitor. In this case some part of the bezel will be cropped.
+	- `inner` mode resizes the bezel based on the dimensions of the viewport. This is useful when you want to maximise the play area of the game on your monitor. In this case some part of the bezel will be cropped.
 
 	- `custom` mode is similar to inner mode but lets you specify the size of the resized viewport explicitly with parameters `-cx` and `-cy` unless of fitting it in the target size (with optional margins). It's particularly useful when you want all the resized viewport to have the same size, whether they are horizontal or vertical, by launching with parameters similar to: `python retromanager.py "MAME 2016" pacman -rm custom -cx 1000 -cy 1000 -tx 1920 -ty 1080`
 
