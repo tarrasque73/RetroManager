@@ -82,6 +82,7 @@ Resize bezel in an bezel with the same size of the original, leaving 100 pixels 
 As above, but resized bezel will be 1920x1080 pixels. If the aspect ratio of the original bezel and the resized bezel differ, any excess area will be white.
 
 `python retromanager.py "MAME 2016" blktiger -rm custom -cx 1000 -cy 1000 -tx 1920 -ty 1080`
+
 `python retromanager.py "MAME 2016" gyruss -rm custom -cx 1000 -cy 1000 -tx 1920 -ty 1080`
 
 In this examples, the two bezels have different orientations because the first game has an horizontal screen and the second vertical. The commands produce new bezels where the viewports have the same maximum dimension. 
