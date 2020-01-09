@@ -30,6 +30,7 @@ def setupLogging(logger):
 	
 	console_handler = logging.StreamHandler()
 	console_handler.setLevel(logging.INFO)
+	#console_handler.setLevel(logging.DEBUG)
 	console_format = logging.Formatter('%(levelname)s - %(message)s')
 	console_handler.setFormatter(console_format)
 	
@@ -47,11 +48,13 @@ def setupUsage(logger):
 	subparsers = parser.add_subparsers(dest='command', title='commands', description='valid commands', help='add -h after the command name to display help about the command')
 	
 	parser_bezel_resize = subparsers.add_parser('bezel_resize', description="Resize bezel images", help="Resize bezel images", parents=[parent_parser])
+	parser_bezel_resize.add_argument("-cx", "--customsizex", type=int, default=0, help="X size of the resized viewport for custom mode resize")
+	parser_bezel_resize.add_argument("-cy", "--customsizey", type=int, default=0, help="Y size of the resized viewport for custom mode resize")
 	parser_bezel_resize.add_argument("-tx", "--targetsizex", type=int, default=0, help="target X size of the generated bezel")
 	parser_bezel_resize.add_argument("-ty", "--targetsizey", type=int, default=0, help="target Y size of the generated bezel")
 	parser_bezel_resize.add_argument("-mx", "--marginx", type=int, default=0, help="left and right margins of the generated bezel")
 	parser_bezel_resize.add_argument("-my", "--marginy", type=int, default=0, help="top and bottom margins of the generated bezel")
-	parser_bezel_resize.add_argument("-rm", "--resizemode", type=str, default='outer', choices=['inner', 'outer'], help="mode of the resizing of the bezel")
+	parser_bezel_resize.add_argument("-rm", "--resizemode", type=str, default='outer', choices=['inner', 'outer', 'custom'], help="resize mode of the bezel")
 	parser_bezel_resize.add_argument("-bc", "--backgroundcolor", type=str, default='000000', help="background color")
 	parser_bezel_resize.add_argument("-tt", "--transparency", type=int, default=200, help="transparency threshold for bezel detection")
 	parser_bezel_resize.add_argument("-pd", "--padding", type=int, default=3, help="padding between viewport and bezel")
@@ -69,11 +72,13 @@ def setupUsage(logger):
 	parser_shader_generate = subparsers.add_parser('shader_generate', description="Generate shader configuration files", help="Generate shader files", parents=[parent_parser])
 
 	parser_generate_all = subparsers.add_parser('generate_all', description="Performs resize, config_generate, shader_generate, overlay_generate, layout_generate", help="Generate all configuration files and images", parents=[parent_parser])
+	parser_generate_all.add_argument("-cx", "--customsizex", type=int, default=0, help="X size of the resized viewport for custom mode resize")
+	parser_generate_all.add_argument("-cy", "--customsizey", type=int, default=0, help="Y size of the resized viewport for custom mode resize")
 	parser_generate_all.add_argument("-tx", "--targetsizex", type=int, default=0, help="target X size of the generated bezel")
 	parser_generate_all.add_argument("-ty", "--targetsizey", type=int, default=0, help="target Y size of the generated bezel")
 	parser_generate_all.add_argument("-mx", "--marginx", type=int, default=0, help="left and right margins of the generated bezel")
 	parser_generate_all.add_argument("-my", "--marginy", type=int, default=0, help="top and bottom margins of the generated bezel")
-	parser_generate_all.add_argument("-rm", "--resizemode", type=str, default='outer', choices=['inner', 'outer'], help="mode of the resizing of the bezel")
+	parser_generate_all.add_argument("-rm", "--resizemode", type=str, default='outer', choices=['inner', 'outer', 'custom'], help="resize mode of the bezel")
 	parser_generate_all.add_argument("-bc", "--backgroundcolor", type=str, default='000000', help="background color")
 	parser_generate_all.add_argument("-tt", "--transparency", type=int, default=200, help="transparency threshold for viewport detection")
 	parser_generate_all.add_argument("-pd", "--padding", type=int, default=3, help="padding between viewport and bezel")
@@ -98,7 +103,7 @@ def main():
 	elif 'shader_generate' == args.command:
 		overlaymanager.generateShader(args.core, args.gamename, config, logger)
 	elif 'generate_all' == args.command:
-		overlaymanager.resize(args.core, args.gamename, args.targetsizex, args.targetsizey, args.marginx, args.marginy, args.resizemode, args.backgroundcolor, 
+		overlaymanager.resize(args.core, args.gamename, args.targetsizex, args.targetsizey, args.marginx, args.marginy, args.customsizex, args.customsizey, args.resizemode, args.backgroundcolor, 
 			args.transparency, args.padding, config, logger)
 		overlaymanager.generateCfg(args.core, args.gamename, args.transparency, args.padding, config, logger)
 		overlaymanager.generateShader(args.core, args.gamename, config, logger)
@@ -109,10 +114,10 @@ def main():
 	elif 'layout_generate' == args.command:
 		overlaymanager.generateLayout(args.core, args.gamename, args.transparency, args.padding,config, logger)
 	elif 'bezel_resize' == args.command:
-		overlaymanager.resize(args.core, args.gamename, args.targetsizex, args.targetsizey, args.marginx, args.marginy, args.resizemode, args.backgroundcolor, 
+		overlaymanager.resize(args.core, args.gamename, args.targetsizex, args.targetsizey, args.marginx, args.marginy, args.customsizex, args.customsizey, args.resizemode, args.backgroundcolor, 
 			args.transparency, args.padding, config, logger)
 	else:
-		logger.error('Command not supported')
+		logger.error('Command %s not supported' % args.command)
 		return -1
 		
 if __name__ == '__main__':

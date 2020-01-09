@@ -91,7 +91,7 @@ def upscale():
 	cips = 4 / float(3)
 	logger.info("4/3 = %.10f" % cips)
 
-def getViewportAxisRange(axis, im, tt, padding, logger):
+def ___getViewportAxisRange(axis, im, tt, padding, logger):
 	if (axis == "x"):
 		stop = im.size[0]
 		fixed = im.size[1] / 2
@@ -103,6 +103,7 @@ def getViewportAxisRange(axis, im, tt, padding, logger):
 	firsttransparent = 0
 	firstcounter = 0
 	
+	logger.debug("Viewport scan on %s axis : fixed dimension at: %d" % (axis, fixed))
 	for i in range (start, stop):
 		if (axis == "x"):
 			pix = im.getpixel((i, fixed))
@@ -115,15 +116,49 @@ def getViewportAxisRange(axis, im, tt, padding, logger):
 			firstcounter = 0
 		if pix[3] < tt and firsttransparent == 0 and firstcounter >= padding:
 			firsttransparent = i
+			logger.debug("Got first trasparent on %s axis at : %d" % (axis, firsttransparent))
 		if pix[3] < tt and firsttransparent != 0:
 			lasttransparent = i
 		if pix[3] < tt:
 			firstcounter = firstcounter +1
+	logger.debug("Got last trasparent on %s axis at : %d" % (axis, lasttransparent))
 
 	viewportsize = lasttransparent - firsttransparent
 
-	logger.debug("First %s transparent pixel: %d" % (axis, firsttransparent))
-	logger.debug("Last %s transparent pixel: %d" % (axis, lasttransparent))
+	logger.debug("Viewport scan on %s axis : %d to %d (size %d)" % (axis, firsttransparent, lasttransparent, viewportsize))
+	
+	return viewportsize, firsttransparent
+	
+def getViewportAxisRange(axis, im, tt, padding, logger):
+	if (axis == "x"):
+		stop = im.size[0]
+		fixed = im.size[1] / 2
+	else:
+		stop = im.size[1]
+		fixed = im.size[0] / 2
+
+	start = 0
+	firsttransparent = 0
+	lasttransparent = stop
+	firstcounter = 0
+	
+	logger.debug("Viewport scan on %s axis from %d to %d,  fixed dimension at: %d" % (axis, start, stop, fixed))
+	for i in range (start, stop):
+		if (axis == "x"):
+			pix = im.getpixel((i, fixed))
+		else:
+			pix = im.getpixel((fixed, i))
+			
+		if pix[3] < tt and firsttransparent == 0:
+			firsttransparent = i
+			logger.debug("Got first trasparent on %s axis at : %d" % (axis, firsttransparent))
+		if pix[3] >= tt and firsttransparent != 0 and lasttransparent == stop:
+			lasttransparent = i-1
+			logger.debug("Got last trasparent on %s axis at : %d" % (axis, lasttransparent))
+
+	viewportsize = lasttransparent - firsttransparent
+
+	logger.debug("Viewport scan on %s axis : %d to %d (size %d)" % (axis, firsttransparent, lasttransparent, viewportsize))
 	
 	return viewportsize, firsttransparent
 	
@@ -133,16 +168,20 @@ def getViewportRange(im, tt, padding, logger):
 	
 	return firstxtransparent, firstytransparent, xsize, ysize 
 
-def resize(core, gamename, maxwidth, maxheight, marginx, marginy, mode, bc, tt, padding, config, logger):
+def resize(core, gamename, maxwidth, maxheight, marginx, marginy, customx, customy, mode, bc, tt, padding, config, logger):
 
 	imagename = gamename + ".png"
 	imagefilename = config['resize']['inputresizebasedir'] + imagename
 	overlaydir = config['resize']['outputresizebasedir']
 	os.makedirs(overlaydir, exist_ok=True)
 
-	logger.info("Resizing image: %s " % imagefilename)
+	logger.info("Resizing image: %s with mode %s" % (imagefilename, mode))
 	logger.debug('Max width / height: %s %s' % (maxwidth, maxheight))
 	
+	if (not os.path.exists(imagefilename)):
+		logger.error('Missing image file: %s' % imagefilename)
+		exit(-1)
+		
 	im = Image.open(imagefilename)
 	logger.debug("Original image data: %s %s %s %s %s" % (im.format, im.size, im.mode, mode, im.getbands()))
 	
@@ -150,6 +189,18 @@ def resize(core, gamename, maxwidth, maxheight, marginx, marginy, mode, bc, tt, 
 		maxwidth = im.width
 	if (maxheight == 0) :
 		maxheight = im.height
+		
+	if (customx == 0) :
+		customx = im.width
+	if (customy == 0) :
+		customy = im.height
+
+	if (customx > maxwidth) :
+		logger.error("Custom X viewport size must be smaller than X target size.")
+		return -1	
+	if (customy > maxheight) :
+		logger.error("Custom Y viewport size must be smaller than Y target size.")
+		return -1	
 		
 	if (maxwidth == im.width and maxheight == im.height and mode == 'outer') :
 		logger.info("No resizing needed")
@@ -164,17 +215,24 @@ def resize(core, gamename, maxwidth, maxheight, marginx, marginy, mode, bc, tt, 
 			logger.error("No transparent viewport found.")
 			return -1	
 		
-		#calculate resized image target size accounting for margins
-		resizewidth = maxwidth - marginx
-		resizeheight = maxheight - marginy
-		
-		#calculate area to base the resize operation depending on mode (inner, outer)
+		#calculate target size and area to base the resize operation depending on mode
 		if (mode == 'inner') :
 			areax = viewport_width
 			areay = viewport_height
-		else:
+			resizewidth = maxwidth - marginx
+			resizeheight = maxheight - marginy
+		elif (mode == 'outer') :
 			areax = im.width
 			areay = im.height
+			resizewidth = maxwidth - marginx
+			resizeheight = maxheight - marginy
+		elif (mode == 'custom') :
+			areax = viewport_width
+			areay = viewport_height
+			resizewidth = customx
+			resizeheight = customy
+		else :
+			logger.error('Resize mode %s not supported' % mode)
 
 		#calculate the actual new ratio, width and height for the resized image
 		ratio = min(resizewidth/areax, resizeheight/areay)
@@ -194,9 +252,14 @@ def resize(core, gamename, maxwidth, maxheight, marginx, marginy, mode, bc, tt, 
 		if (mode == 'inner') :
 			offsetx = round((maxwidth - rviewport_width) / 2 - rviewport_x)
 			offsety = round((maxheight - rviewport_height) / 2 -rviewport_y)
-		else:
+		elif (mode == 'outer') :
 			offsetx = round((maxwidth - new_width) / 2)
 			offsety = round((maxheight - new_height) / 2)
+		elif (mode == 'custom') :
+			offsetx = round((maxwidth - rviewport_width) / 2 - rviewport_x)
+			offsety = round((maxheight - rviewport_height) / 2 -rviewport_y)
+		else :
+			logger.error('Resize mode %s not supported' % mode)
 		
 		#create background image
 		backim = Image.new("RGBA", (maxwidth, maxheight), "#" + bc)
@@ -211,7 +274,7 @@ def resize(core, gamename, maxwidth, maxheight, marginx, marginy, mode, bc, tt, 
 		
 		#paste resized image over backgound and mask
 		backim.paste(newim, (offsetx, offsety))
-		#####backim.save(overlaydir + "final_" + imagename, "PNG")
+		#####backim.save(overlaydir + "composite_" + imagename, "PNG")
 
 		#save overlay
 		backim.save(overlaydir + imagename, "PNG")
@@ -254,11 +317,12 @@ def generateCfg(core, gamename, tt, padding, config, logger):
 	logger.debug("Image data: %s %s %s %s" % (im.format, im.size, im.mode, im.getbands()))
 	
 	viewport_x, viewport_y, viewport_width, viewport_height = getViewportRange(im, tt, padding, logger)
+	logger.info("Viewport: %s %s %s %s" % (viewport_x, viewport_y, viewport_width, viewport_height))
 	
 	#print("Test new viewport size: ", newxsize, newysize)
 	
-	if (viewport_width == 0 or viewport_height == 0) :
-		logger.info("No transparent viewport found.")
+	if (viewport_width < 1 or viewport_height < 1) :
+		logger.error("No transparent viewport found.")
 		return -1
 	
 	viewport_r = viewport_height / float(viewport_width)		
@@ -282,4 +346,3 @@ def copyOverlay(core, gamename, config):
 	os.makedirs(overlaydir, exist_ok=True)
 	copy(inputdir + imagename, overlaydir + imagename)
 	writeOverlay(gamename, overlaydir, imagename, logger)
-	

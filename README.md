@@ -35,9 +35,9 @@ Where:
 
 Current supported parameters are: overlay_resize, config_generate, shader_generate, generate_all
  
-#### overlay_resize
+#### bezel_resize
 
-Resizes an overlay from the input folder to the output folder and generates the corresponding .cfg file according to the template. for our purposes, "overlay" is any PNG image that contains a sqar(ish) transparent or mostly transparent area in the middle, which we refer to as "viewport". All resize operations keep the aspect ratio of the original image.
+Resizes a bezel from the input folder to the output folder and generates the corresponding .cfg file according to the template. for our purposes, "bezel" is any PNG image that contains a rectangular transparent or mostly transparent area in the middle, which we refer to as "viewport". All resize operations keep the aspect ratio of the original image.
 
 Basic syntax: `python retromanager.py overlay_resize <core> <gamename> <additional parameters>` 
 
@@ -45,33 +45,46 @@ The command looks for input file <gamename>.png in the input directory, detects 
 
 Parameters:
 
-- -tx and -ty set the targes size of the resized overlay. If not provided they default to the original dimensions.
+- `-tx` and `-ty` set the target size of the resized bezel. If not provided they default to the original dimensions.
 
-- -tm sets the "mode" of the resize operation, and can be either of "outer" or "inner". Outer means that the dimensions of the original overay taken into account for resizing are the dimensions of the full image. Inner means that the dimensions of the viewport are taken into account instead. This is usefulwhen you want to maximise the play area of the game on your screen. In this case some part of the overlay will be cropped. the default is "outer"
+- `-tm` sets the "mode" of the resize operation, and can be "outer", "inner" or "custom". Default is "outer"
 
-- -mx and -my set the margins of the resize operation. Are mostly used combined with "-rm inner" in ordae to leave some of the overlay visible around the resized viewport. They don't have much use with "-rm outer" unless you want to let some of the background visible. Defaults are zero.
+-- `outer` mode resizes the bezel based on the dimensions of the dimensions of the original image.
 
-- -bc sets the background color for the resized overlay before the resized image is pasted on it. It's expressed in hexadecimal values. Default value is "000000" (black).
+-- `inner` mode resizes the bezel based on the dimensions of the viewport. This is useful when you want to maximise the play area of the game on your monitor. In this case some part of the bezel will be cropped.
 
-NOTE: when -tx, -ty and -rm are all missing or set to default the original overlay is just copied to the destination and it's not subject to any resize operation.
+-- `custom` mode is similar to inner mode but lets you specify the size of the resized viewport explicitly with parameters `-cx` and `-cy` unless of fitting it in the target size (with optional margins). It's particularly useful when you want all the resized viewport to have the same size, whether they are horizontal or vertical, by launching with parameters similar to: `python retromanager.py "MAME 2016" pacman -rm custom -cx 1000 -cy 1000 -tx 1920 -ty 1080`
+
+- `-cx` and `-cy` set the intended size of theresized viewport for mode `outer`. They are ignored for other resize modes. If not provided they default to the original dimensions. If
+
+- `-mx` and `-my` set the margins of the resize operation. they are usually used combined with `-rm inner` in order to leave some of the bezel visible around the resized viewport. They don't have much use with `-rm outer` unless you want to let some of the background visible. They are ignored with `-rm custom`. Defaults are 0.
+
+- `-bc` sets the background color for the resized bezel before the resized image is pasted on it. It's expressed in hexadecimal values. Default value is "000000" (black).
+
+NOTE: when `-tx`, `-ty` and `-rm` are all missing or set to default the original bezel is just copied to the destination and it's not subject to any resize operation, so the process is faster.
 
 Examples: 
 
 `python retromanager.py "MAME 2016" pacman`
 
-Simple copy of overlay into output folder and configuration file generation
+Simple copy of bezel into output folder and configuration file generation
 
 `python retromanager.py "MAME 2016" pacman -rm inner`
 
-Resize overlay maximising the viewport area in an overlay with the same size of the original, all excess parts cropped.
+Resize bezel maximising the viewport area in an bezel with the same size of the original, all excess parts cropped.
 
 `python retromanager.py "MAME 2016" pacman -rm inner -mx 100 - my 100`
 
-Resize overlay in an overlay with the same size of the original, leaving 100 pixels of margin around the viewport.
+Resize bezel in an bezel with the same size of the original, leaving 100 pixels of margin around the viewport.
 
 `python retromanager.py "MAME 2016" pacman -rm inner -mx 100 - my 100 - tx 1920 - ty 1080 -bc FFFFFF`
 
-As above, but resized overlay will be 1920x1080 pixels. If the aspect ratio of the original overlay and the resized overlay differ, any excess area will be white.
+As above, but resized bezel will be 1920x1080 pixels. If the aspect ratio of the original bezel and the resized bezel differ, any excess area will be white.
+
+`python retromanager.py "MAME 2016" blktiger -rm custom -cx 1000 -cy 1000 -tx 1920 -ty 1080`
+`python retromanager.py "MAME 2016" gyruss -rm custom -cx 1000 -cy 1000 -tx 1920 -ty 1080`
+
+In this examples, the two bezels have different orientations because the first game has an horizontal screen and the second vertical. The commands produce new bezels where the viewports have the same size. 
 
 #### config_generate
 
